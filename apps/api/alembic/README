@@ -1,0 +1,2 @@
+GP Autos schema migrations are managed with Alembic.
+Run `uv run alembic upgrade head` after setting DATABASE_URL in apps/api/.env.

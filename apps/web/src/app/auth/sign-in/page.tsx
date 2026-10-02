@@ -1,0 +1,42 @@
+import Link from "next/link";
+import { SiteHeader } from "@/components/site-header";
+
+const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+export default function SignInPage() {
+  return (
+    <main>
+      <SiteHeader />
+      <section className="auth-shell">
+        <aside className="auth-brand" aria-label="GP Autos brand panel">
+          <div className="auth-brand-content">
+            <p className="eyebrow">Built for better buying</p>
+            <h1>Drive your next decision with confidence.</h1>
+            <p>Manage your saved cars, recent purchases, and all the details that matter before you commit.</p>
+          </div>
+        </aside>
+
+        <div className="auth-panel">
+          <div className="auth-card">
+            <p className="eyebrow">Welcome back</p>
+            <h1>Good to have you here.</h1>
+            <p>Sign in securely to continue checkout, review your orders, and keep your GP Autos experience in sync.</p>
+
+            <a className="button button-cyan" href={`${apiBase}/auth/google`}>
+              Continue with Google <span aria-hidden="true">↗</span>
+            </a>
+
+            <div className="auth-divider">or</div>
+
+            <p className="auth-cta-copy">Don&apos;t have an account?</p>
+            <Link className="button button-dark" href="/auth/sign-up">Create an account</Link>
+
+            <p className="auth-footer">
+              Need a quick refresher? <Link href="/vehicles">View available vehicles</Link>
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
