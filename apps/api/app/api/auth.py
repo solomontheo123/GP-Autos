@@ -2,6 +2,7 @@ from typing import cast
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from itsdangerous import URLSafeTimedSerializer
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import RedirectResponse
 
@@ -10,8 +11,12 @@ from app.core.oauth import oauth
 from app.db.session import get_session
 from app.dependencies.auth import get_current_user
 from app.models.user import User
-from app.schemas.auth import AuthUserRead
-from app.services.auth_service import find_or_create_google_user
+from app.schemas.auth import AuthUserRead, EmailLoginRequest, EmailRegisterRequest
+from app.services.auth_service import (
+    find_or_create_google_user,
+    hash_password,
+    verify_password,
+)
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -74,6 +79,66 @@ async def google_callback(
     response = RedirectResponse(url=settings.frontend_url, status_code=status.HTTP_303_SEE_OTHER)
     _set_session(response, user)
     return response
+
+
+@router.post("/register", response_model=AuthUserRead)
+async def register_user(
+    payload: EmailRegisterRequest,
+    response: Response,
+    session: AsyncSession = Depends(get_session),
+) -> AuthUserRead:
+    if payload.password != payload.confirm_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Passwords do not match.",
+        )
+
+    normalized_email = payload.email.lower().strip()
+    existing_user = await session.scalar(select(User).where(User.email == normalized_email))
+    if existing_user is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An account with this email already exists.",
+        )
+
+    user = User(
+        email=normalized_email,
+        name=payload.name.strip(),
+        password_hash=hash_password(payload.password),
+        google_id=None,
+        avatar_url=None,
+    )
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+
+    response = Response(content="", status_code=status.HTTP_201_CREATED)
+    _set_session(response, user)
+    return AuthUserRead(id=user.id, email=user.email, name=user.name, avatar_url=user.avatar_url)
+
+
+@router.post("/login", response_model=AuthUserRead)
+async def login_user(
+    payload: EmailLoginRequest,
+    response: Response,
+    session: AsyncSession = Depends(get_session),
+) -> AuthUserRead:
+    normalized_email = payload.email.lower().strip()
+    user = await session.scalar(select(User).where(User.email == normalized_email))
+    if user is None or user.password_hash is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password.",
+        )
+    if not verify_password(payload.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password.",
+        )
+
+    response = Response(content="", status_code=status.HTTP_200_OK)
+    _set_session(response, user)
+    return AuthUserRead(id=user.id, email=user.email, name=user.name, avatar_url=user.avatar_url)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)

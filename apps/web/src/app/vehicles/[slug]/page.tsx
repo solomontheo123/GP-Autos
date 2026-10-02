@@ -14,14 +14,7 @@ export function generateStaticParams() {
 
 export default async function VehicleDetailPage({ params }: VehicleDetailPageProps) {
   const { slug } = await params;
-  let vehicle = vehicles.find((item) => item.slug === slug);
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-  try {
-    const response = await fetch(`${apiUrl}/api/vehicles/slug/${encodeURIComponent(slug)}`, { next: { revalidate: 60 } });
-    if (response.ok) vehicle = await response.json() as typeof vehicle;
-  } catch {
-    // Local preview remains available when the backend has not been configured.
-  }
+  const vehicle = vehicles.find((item) => item.slug === slug);
   if (!vehicle) notFound();
 
   return (

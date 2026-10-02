@@ -3,21 +3,9 @@ import { vehicles } from "@/lib/vehicles";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { VehicleCard } from "@/components/vehicle-card";
-import type { Vehicle } from "@/lib/vehicles";
 
-async function getVehicles(): Promise<Vehicle[]> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-  try {
-    const response = await fetch(`${apiUrl}/api/vehicles`, { next: { revalidate: 60 } });
-    if (response.ok) return await response.json() as Vehicle[];
-  } catch {
-    return vehicles;
-  }
-  return vehicles;
-}
-
-export default async function Home() {
-  const vehicles = await getVehicles();
+export default function Home() {
+  const featuredVehicles = vehicles.slice(0, 6);
   return (
     <main>
       <SiteHeader />
@@ -37,7 +25,7 @@ export default async function Home() {
           <Link className="text-link" href="/vehicles">View all vehicles <span aria-hidden="true">↗</span></Link>
         </div>
         <div className="vehicle-grid">
-          {vehicles.slice(0, 6).map((vehicle) => <VehicleCard key={vehicle.slug} vehicle={vehicle} />)}
+          {featuredVehicles.map((vehicle) => <VehicleCard key={vehicle.slug} vehicle={vehicle} />)}
         </div>
       </section>
       <section className="trust-band" id="why-gp-autos">
