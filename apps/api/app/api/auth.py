@@ -112,7 +112,7 @@ async def register_user(
     await session.commit()
     await session.refresh(user)
 
-    response = Response(content="", status_code=status.HTTP_201_CREATED)
+    response.status_code = status.HTTP_201_CREATED
     _set_session(response, user)
     return AuthUserRead(id=user.id, email=user.email, name=user.name, avatar_url=user.avatar_url)
 
@@ -136,7 +136,6 @@ async def login_user(
             detail="Invalid email or password.",
         )
 
-    response = Response(content="", status_code=status.HTTP_200_OK)
     _set_session(response, user)
     return AuthUserRead(id=user.id, email=user.email, name=user.name, avatar_url=user.avatar_url)
 
