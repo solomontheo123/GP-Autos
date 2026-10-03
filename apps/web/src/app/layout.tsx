@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { AuthProvider } from "@/components/auth-provider";
 import { CartProvider } from "@/components/cart-provider";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ToastProvider } from "@/components/toaster";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -40,7 +41,9 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         />
         <ThemeProvider>
           <AuthProvider>
-            <CartProvider>{children}</CartProvider>
+            <ToastProvider>
+              <CartProvider>{children}</CartProvider>
+            </ToastProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

@@ -4,12 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-import { SiteHeader } from "@/components/site-header";
+import { useToast } from "@/components/toaster";
 
 const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export default function SignInPage() {
   const router = useRouter();
+  const showToast = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -32,17 +33,29 @@ export default function SignInPage() {
 
       const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
       if (!response.ok) {
-        throw new Error(payload?.detail ?? "Sign in failed. Please check your details and try again.");
+        const message = payload?.detail || "Invalid email or password.";
+        throw new Error(message);
       }
+
+      showToast({
+        title: "Signed in",
+        description: "Welcome back to GP Autos.",
+        variant: "success",
+      });
 
       router.push("/");
       router.refresh();
     } catch (submitError) {
-      setError(
-        submitError instanceof Error
+      const message =
+        submitError instanceof Error && submitError.message && !submitError.message.includes("Failed to fetch")
           ? submitError.message
-          : "Sign in failed. Please check your details and try again.",
-      );
+          : "Unable to connect to GP Autos. Please check your connection and try again.";
+      setError(message);
+      showToast({
+        title: "Sign in failed",
+        description: message,
+        variant: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -50,10 +63,10 @@ export default function SignInPage() {
 
   return (
     <main>
-      <SiteHeader />
       <section className="auth-shell">
         <aside className="auth-brand" aria-label="GP Autos brand panel">
           <div className="auth-brand-content">
+            <Link href="/" className="auth-brand-home">← Back to GP Autos</Link>
             <p className="eyebrow">Built for better buying</p>
             <h1>Drive your next decision with confidence.</h1>
             <p>Manage your saved cars, recent purchases, and all the details that matter before you commit.</p>

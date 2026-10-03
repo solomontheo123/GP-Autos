@@ -2,6 +2,7 @@ import Link from "next/link";
 import { vehicles } from "@/lib/vehicles";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { PartsMechanicsShowcase } from "@/components/parts-mechanics-showcase";
 import { VehicleCard } from "@/components/vehicle-card";
 
 export default function Home() {
@@ -39,6 +40,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <PartsMechanicsShowcase />
       <SiteFooter />
     </main>
   );
