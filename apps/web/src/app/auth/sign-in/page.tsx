@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
+import { useAuth } from "@/components/auth-provider";
+import { PasswordInput } from "@/components/password-input";
 import { useToast } from "@/components/toaster";
 
 const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -11,6 +13,7 @@ const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 export default function SignInPage() {
   const router = useRouter();
   const showToast = useToast();
+  const { refresh } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -33,18 +36,19 @@ export default function SignInPage() {
 
       const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
       if (!response.ok) {
-        const message = payload?.detail || "Invalid email or password.";
+        const message = payload?.detail || "Sign in failed. Please check your email and password.";
         throw new Error(message);
       }
 
+      await refresh();
+
       showToast({
-        title: "Signed in",
+        title: "Welcome back",
         description: "Welcome back to GP Autos.",
         variant: "success",
       });
 
       router.push("/");
-      router.refresh();
     } catch (submitError) {
       const message =
         submitError instanceof Error && submitError.message && !submitError.message.includes("Failed to fetch")
@@ -93,18 +97,15 @@ export default function SignInPage() {
                 />
               </div>
 
-              <div className="auth-field">
-                <label htmlFor="signin-password">Password</label>
-                <input
-                  id="signin-password"
-                  type="password"
-                  name="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  autoComplete="current-password"
-                  required
-                />
-              </div>
+              <PasswordInput
+                id="signin-password"
+                label="Password"
+                name="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
+                required
+              />
 
               {error ? (
                 <p aria-live="polite" style={{ color: "#fda4af", marginTop: "1rem" }}>

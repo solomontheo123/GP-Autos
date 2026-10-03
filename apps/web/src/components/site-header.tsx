@@ -6,8 +6,10 @@ import { useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useCart } from "@/components/cart-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useToast } from "@/components/toaster";
 
 const primaryLinks = [
+  { href: "/", label: "Home" },
   { href: "/vehicles", label: "Inventory" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
@@ -17,12 +19,33 @@ export function SiteHeader() {
   const pathname = usePathname();
   const { isAuthenticated, isLoading, user, signOut } = useAuth();
   const { itemCount } = useCart();
+  const showToast = useToast();
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
+  };
+
+  const handleSignOut = async () => {
+    setMenuVisible(false);
+    setMenuOpen(false);
+
+    try {
+      await signOut();
+      showToast({
+        title: "Signed out",
+        description: "You have been signed out.",
+        variant: "success",
+      });
+    } catch {
+      showToast({
+        title: "Sign out failed",
+        description: "Unable to sign out right now. Please try again.",
+        variant: "error",
+      });
+    }
   };
 
   return (
@@ -56,7 +79,7 @@ export function SiteHeader() {
                 <div className="account-dropdown" role="menu">
                   <Link href="/orders" role="menuitem">Orders</Link>
                   <Link href="/cart" role="menuitem">Cart</Link>
-                  <button type="button" role="menuitem" onClick={() => { setMenuVisible(false); void signOut(); }} className="account-signout">
+                  <button type="button" role="menuitem" onClick={() => { void handleSignOut(); }} className="account-signout">
                     Sign out
                   </button>
                 </div>
@@ -99,7 +122,7 @@ export function SiteHeader() {
               <>
                 <Link href="/orders" onClick={() => setMenuOpen(false)}>Orders</Link>
                 <Link href="/cart" onClick={() => setMenuOpen(false)}>Cart</Link>
-                <button type="button" onClick={() => { setMenuOpen(false); void signOut(); }} className="account-signout">Sign out</button>
+                <button type="button" onClick={() => { void handleSignOut(); }} className="account-signout">Sign out</button>
               </>
             ) : (
               <Link href="/auth/sign-in" onClick={() => setMenuOpen(false)}>Sign In</Link>

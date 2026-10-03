@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
+import { useAuth } from "@/components/auth-provider";
+import { PasswordInput } from "@/components/password-input";
 import { useToast } from "@/components/toaster";
 
 const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -11,6 +13,7 @@ const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 export default function SignUpPage() {
   const router = useRouter();
   const showToast = useToast();
+  const { refresh } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,14 +48,15 @@ export default function SignUpPage() {
         throw new Error(message);
       }
 
+      await refresh();
+
       showToast({
-        title: "Account created",
+        title: "Account created successfully",
         description: "Welcome to GP Autos.",
         variant: "success",
       });
 
       router.push("/");
-      router.refresh();
     } catch (submitError) {
       const message =
         submitError instanceof Error && submitError.message && !submitError.message.includes("Failed to fetch")
@@ -114,33 +118,27 @@ export default function SignUpPage() {
                 />
               </div>
 
-              <div className="auth-field">
-                <label htmlFor="signup-password">Password</label>
-                <input
-                  id="signup-password"
-                  type="password"
-                  name="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  autoComplete="new-password"
-                  minLength={8}
-                  required
-                />
-              </div>
+              <PasswordInput
+                id="signup-password"
+                label="Password"
+                name="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="new-password"
+                minLength={8}
+                required
+              />
 
-              <div className="auth-field">
-                <label htmlFor="signup-confirm-password">Confirm password</label>
-                <input
-                  id="signup-confirm-password"
-                  type="password"
-                  name="confirmPassword"
-                  value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
-                  autoComplete="new-password"
-                  minLength={8}
-                  required
-                />
-              </div>
+              <PasswordInput
+                id="signup-confirm-password"
+                label="Confirm password"
+                name="confirmPassword"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                autoComplete="new-password"
+                minLength={8}
+                required
+              />
 
               {error ? (
                 <p aria-live="polite" style={{ color: "#fda4af", marginTop: "1rem" }}>
