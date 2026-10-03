@@ -17,12 +17,13 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="GP Autos API", version="0.1.0", lifespan=lifespan)
+allowed_origins = [origin.strip() for origin in settings.frontend_url.split(",") if origin.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_url],
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Content-Type", "X-Paystack-Signature"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 app.add_middleware(
     SessionMiddleware,
