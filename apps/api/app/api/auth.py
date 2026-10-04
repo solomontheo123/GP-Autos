@@ -34,7 +34,7 @@ def _set_session(response: Response, user: User) -> None:
         max_age=settings.session_max_age_seconds,
         httponly=True,
         secure=settings.is_production,
-        samesite="lax",
+        samesite="none" if settings.is_production else "lax",
         path="/",
     )
 
