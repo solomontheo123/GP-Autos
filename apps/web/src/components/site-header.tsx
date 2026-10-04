@@ -9,7 +9,6 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/components/toaster";
 
 const primaryLinks = [
-  { href: "/", label: "Home" },
   { href: "/vehicles", label: "Inventory" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
