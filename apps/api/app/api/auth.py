@@ -45,7 +45,11 @@ async def google_login(request: Request) -> RedirectResponse:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Google OAuth is not configured"
         )
-    callback_uri = settings.google_redirect_uri
+    callback_uri = (
+        "https://gp-autos.onrender.com/auth/google/callback"
+        if settings.is_production
+        else settings.google_redirect_uri
+    )
     return cast(RedirectResponse, await oauth.google.authorize_redirect(request, callback_uri))
 
 
@@ -148,7 +152,7 @@ async def logout() -> Response:
         path="/",
         httponly=True,
         secure=settings.is_production,
-        samesite="lax",
+        samesite="none" if settings.is_production else "lax",
     )
     return response
 

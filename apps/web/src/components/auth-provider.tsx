@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 
 type AuthUser = {
   id: string;
@@ -31,6 +32,7 @@ async function fetchCurrentUser(): Promise<AuthUser | null> {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -64,17 +66,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-    try {
-      await fetch(`${apiBase}/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-    } finally {
-      setUser(null);
+    const response = await fetch(`${apiBase}/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error("Sign out request failed");
     }
-  };
+
+    setUser(null);
+    router.replace("/");
+  }, [router]);
 
   const value = useMemo<AuthContextValue>(() => ({
     user,
@@ -82,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: Boolean(user),
     refresh,
     signOut,
-  }), [user, isLoading]);
+  }), [user, isLoading, signOut]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
