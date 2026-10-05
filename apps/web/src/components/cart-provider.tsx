@@ -81,7 +81,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    void loadCart();
+    const timer = window.setTimeout(() => {
+      void loadCart();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [loadCart]);
 
   const addItem = useCallback(async (vehicleListingId: string) => {
