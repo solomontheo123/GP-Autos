@@ -21,6 +21,7 @@ from app.db.base import Base
 from app.models.enums import ListingStatus
 
 if TYPE_CHECKING:
+    from app.models.cart_item import CartItem
     from app.models.order_item import OrderItem
 
 
@@ -65,3 +66,4 @@ class VehicleListing(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     order_items: Mapped[list[OrderItem]] = relationship(back_populates="vehicle_listing")
+    cart_items: Mapped[list[CartItem]] = relationship(back_populates="vehicle_listing")

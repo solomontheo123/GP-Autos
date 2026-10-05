@@ -1,59 +1,119 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useAuth } from "@/components/auth-provider";
+import { apiRequest } from "@/lib/api";
 
-export type CartItem = { vehicleListingId: string; quantity: number };
+export type CartItem = {
+  vehicleListingId: string;
+  quantity: number;
+  title?: string;
+  slug?: string;
+  make?: string;
+  model?: string;
+  year?: number;
+  mileage?: number;
+  location?: string;
+  price?: number;
+  imageUrl?: string;
+};
+type BackendCartItem = {
+  id: string;
+  vehicle_listing_id: string;
+  quantity: number;
+  vehicle_listing: {
+    id: string;
+    title: string;
+    slug: string;
+    make: string;
+    model: string;
+    year: number;
+    mileage: number;
+    location: string;
+    price: string;
+    currency: string;
+    image_url: string;
+  };
+};
 type CartContextValue = {
   items: CartItem[];
   itemCount: number;
-  addItem: (vehicleListingId: string) => void;
-  removeItem: (vehicleListingId: string) => void;
-  clearCart: () => void;
+  isLoading: boolean;
+  addItem: (vehicleListingId: string) => Promise<void>;
+  removeItem: (vehicleListingId: string) => Promise<void>;
+  clearCart: () => Promise<void>;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
-const CART_STORAGE_KEY = "gp-autos-cart";
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadCart = useCallback(async () => {
+    if (!isAuthenticated) {
+      setItems([]);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const backendItems = await apiRequest<BackendCartItem[]>("/api/cart");
+      setItems(backendItems.map((item) => ({
+        vehicleListingId: item.vehicle_listing_id,
+        quantity: item.quantity,
+        title: item.vehicle_listing.title,
+        slug: item.vehicle_listing.slug,
+        make: item.vehicle_listing.make,
+        model: item.vehicle_listing.model,
+        year: item.vehicle_listing.year,
+        mileage: item.vehicle_listing.mileage,
+        location: item.vehicle_listing.location,
+        price: Number(item.vehicle_listing.price),
+        imageUrl: item.vehicle_listing.image_url,
+      })));
+    } catch {
+      setItems([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    queueMicrotask(() => {
-      try {
-        const savedItems: unknown = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) ?? "[]");
-        if (Array.isArray(savedItems)) {
-          setItems(savedItems.filter((item): item is CartItem =>
-            typeof item?.vehicleListingId === "string" && Number.isInteger(item?.quantity) && item.quantity > 0,
-          ));
-        }
-      } catch {
-        localStorage.removeItem(CART_STORAGE_KEY);
-      } finally {
-        setLoaded(true);
-      }
+    void loadCart();
+  }, [loadCart]);
+
+  const addItem = useCallback(async (vehicleListingId: string) => {
+    if (!isAuthenticated) return;
+    await apiRequest<BackendCartItem>("/api/cart/items", {
+      method: "POST",
+      body: JSON.stringify({ vehicle_listing_id: vehicleListingId, quantity: 1 }),
     });
-  }, []);
+    await loadCart();
+  }, [isAuthenticated, loadCart]);
 
-  useEffect(() => {
-    if (loaded) localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-  }, [items, loaded]);
+  const removeItem = useCallback(async (vehicleListingId: string) => {
+    if (!isAuthenticated) return;
+    await apiRequest<unknown>(`/api/cart/items/${vehicleListingId}`, { method: "DELETE" });
+    await loadCart();
+  }, [isAuthenticated, loadCart]);
 
-  function addItem(vehicleListingId: string) {
-    setItems((current) => current.some((item) => item.vehicleListingId === vehicleListingId)
-      ? current
-      : [...current, { vehicleListingId, quantity: 1 }]);
-  }
+  const clearCart = useCallback(async () => {
+    if (!isAuthenticated) return;
+    await apiRequest<unknown>("/api/cart", { method: "DELETE" });
+    await loadCart();
+  }, [isAuthenticated, loadCart]);
 
-  function removeItem(vehicleListingId: string) {
-    setItems((current) => current.filter((item) => item.vehicleListingId !== vehicleListingId));
-  }
+  const value = useMemo<CartContextValue>(() => ({
+    items,
+    itemCount: items.reduce((total, item) => total + item.quantity, 0),
+    isLoading,
+    addItem,
+    removeItem,
+    clearCart,
+  }), [addItem, clearCart, isLoading, items, removeItem]);
 
-  function clearCart() {
-    setItems([]);
-  }
-
-  const value = { items, itemCount: items.reduce((total, item) => total + item.quantity, 0), addItem, removeItem, clearCart };
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 

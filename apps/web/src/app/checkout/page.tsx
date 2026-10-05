@@ -14,7 +14,7 @@ export default function CheckoutPage() {
   const { items } = useCart();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const cartVehicles = items.map((item) => ({ item, vehicle: vehicles.find((vehicle) => vehicle.id === item.vehicleListingId) })).filter((entry) => entry.vehicle);
+  const cartItems = items.filter((item) => item.title && item.price !== undefined);
 
   async function continueToPayment() {
     setBusy(true);
@@ -39,9 +39,9 @@ export default function CheckoutPage() {
     <main>
       <SiteHeader />
       <section className="page-intro"><p className="eyebrow">Almost there</p><h1>Checkout.</h1><p>Review your vehicle selection before continuing to secure payment.</p></section>
-      {cartVehicles.length === 0 ? <section className="empty-state"><h2>Your cart is empty.</h2><Link className="button button-dark" href="/vehicles">Explore vehicles ↗</Link></section> : <section className="cart-layout">
-        <div className="checkout-items"><h2>Order details</h2>{cartVehicles.map(({ vehicle, item }) => vehicle && <article className="cart-row" key={vehicle.id}><div className="cart-thumb" style={{ backgroundImage: `url("${vehicle.imageUrl}")` }} /><div><h2>{vehicle.title}</h2><p>Quantity {item.quantity}</p></div><span className="price">{formatPrice(vehicle.price)}</span></article>)}<p className="checkout-note">Sign in with Google is required before an order can be created. The server validates availability and calculates your final price.</p></div>
-        <aside className="summary-box"><h2>Payment summary</h2><div className="summary-line"><span>Vehicle count</span><span>{cartVehicles.length}</span></div><div className="summary-line"><span>Amount</span><span>Calculated by server</span></div><div className="summary-line summary-total"><span>Total</span><span>Confirmed at checkout</span></div><button className="button button-orange" disabled={busy} type="button" onClick={continueToPayment}>{busy ? "Connecting securely…" : "Continue to payment →"}</button>{error && <p className="error-message" role="alert">{error}{error.includes("Authentication required") || error.includes("Session expired") || (error.includes("Request failed") && error.includes("401")) ? <> <Link href="/auth/sign-in">Sign in ↗</Link></> : null}</p>}<p className="checkout-note">You’ll be redirected to Paystack. GP Autos never handles or stores your card details.</p></aside>
+      {cartItems.length === 0 ? <section className="empty-state"><h2>Your cart is empty.</h2><Link className="button button-dark" href="/vehicles">Explore vehicles ↗</Link></section> : <section className="cart-layout">
+        <div className="checkout-items"><h2>Order details</h2>{cartItems.map((item) => item.title && item.imageUrl && <article className="cart-row" key={item.vehicleListingId}><div className="cart-thumb" style={{ backgroundImage: `url("${item.imageUrl}")` }} /><div><h2>{item.title}</h2><p>Quantity {item.quantity}</p></div><span className="price">{formatPrice(item.price ?? 0)}</span></article>)}<p className="checkout-note">Sign in with Google is required before an order can be created. The server validates availability and calculates your final price.</p></div>
+        <aside className="summary-box"><h2>Payment summary</h2><div className="summary-line"><span>Vehicle count</span><span>{cartItems.length}</span></div><div className="summary-line"><span>Amount</span><span>Calculated by server</span></div><div className="summary-line summary-total"><span>Total</span><span>Confirmed at checkout</span></div><button className="button button-orange" disabled={busy} type="button" onClick={() => { void continueToPayment(); }}>{busy ? "Connecting securely…" : "Continue to payment →"}</button>{error && <p className="error-message" role="alert">{error}{error.includes("Authentication required") || error.includes("Session expired") || (error.includes("Request failed") && error.includes("401")) ? <> <Link href="/auth/sign-in">Sign in ↗</Link></> : null}</p>}<p className="checkout-note">You’ll be redirected to Paystack. GP Autos never handles or stores your card details.</p></aside>
       </section>}
     </main>
   );

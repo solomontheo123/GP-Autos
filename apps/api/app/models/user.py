@@ -8,6 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 if TYPE_CHECKING:
+    from app.models.cart_item import CartItem
     from app.models.order import Order
 
 
@@ -25,3 +26,4 @@ class User(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     orders: Mapped[list[Order]] = relationship(back_populates="user")
+    cart_items: Mapped[list[CartItem]] = relationship(back_populates="user")

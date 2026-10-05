@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-from app.api import auth, orders, payments, vehicles
+from app.api import auth, cart, orders, payments, vehicles
 from app.core.config import settings
 from app.db.session import engine
 
@@ -34,6 +34,7 @@ app.add_middleware(
     https_only=settings.is_production,
 )
 app.include_router(auth.router)
+app.include_router(cart.router)
 app.include_router(vehicles.router)
 app.include_router(orders.router)
 app.include_router(payments.router)
