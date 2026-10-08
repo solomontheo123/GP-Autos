@@ -23,6 +23,7 @@ export function SiteFooter() {
             <li><Link href="/vehicles">Inventory</Link></li>
             <li><Link href="/about">About</Link></li>
             <li><Link href="/contact">Contact</Link></li>
+            <li><a href="https://github.com/solomontheo123/Gp-Autos-mobile/releases/latest/download/gp-autos-mobile.apk">Download Android app</a></li>
           </ul>
         </div>
 
@@ -64,7 +65,7 @@ export function SiteFooter() {
 
       <div className="footer-bottom">
         <span>GP AUTOS</span>
-        <span>© {new Date().getFullYear()} GP Autos. All rights reserved.</span>
+        <span>© {new Date().getFullYear()} Solomon Theophilus. Original GP Autos materials. All rights reserved.</span>
       </div>
     </footer>
   );
